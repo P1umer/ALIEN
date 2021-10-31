@@ -32,7 +32,7 @@ def ida_get_lvars(cfunc):
         "name":lv.name,
         "hasdwarf":lv.has_user_info,
         "isargs":lv.is_arg_var
-        } for lv in lvars]
+        } for lv in lvars if lv.name!=""]
     # print(lv.name,lv.has_user_info)
     return vlist
 
@@ -71,7 +71,7 @@ def start_traverse(filename):
         json.dump(func_list,f)
     return 
 
-# ./idat64 -c -S"/home/p1umer/Documents/dwarf_research/ida_parse_f5.py" ~/Documents/dwarf_research/database/O0/mujs/build/debug/mujs
+# ./idat64 -A -c -S"/home/p1umer/Documents/dwarf_research/ida_parse_f5.py" ~/Documents/dwarf_research/database/O0/mujs/build/debug/mujs
 if __name__ == "__main__":
     # headless
     filename = get_input_file_path()
