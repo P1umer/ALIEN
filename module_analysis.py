@@ -174,7 +174,7 @@ def analysis_ifunc(finfo,ifunc,dfunc):
 def analysis(ijson_file,djson_file):
     print(ijson_file,djson_file)
     with open(ijson_file, 'rb') as ijson, open(djson_file, 'rb') as djson:
-        ifunc_list,dfunc_list= json.load(ijson),json.load(djson)
+        ifunc_list,dfunc_list= json.load(ijson),json.load(djson)['FunctionInfo']
         minfo = ModuleInfo()
         for ifunc in ifunc_list:
             finfo = FunctionInfo()

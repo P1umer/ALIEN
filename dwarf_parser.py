@@ -27,7 +27,7 @@ class ModuleInfo:
         self.dwarf_num_total+=dwarf_num
         self.dwarf_none_num_total+=dwarf_none_num
         return self.func_info_list.append({
-            "func_name":bytes2str(func_name),
+            "function_name":bytes2str(func_name),
             "dwarf_num":dwarf_num,
             "dwarf_none_num":dwarf_none_num,
             "var_list":var_list
@@ -83,7 +83,7 @@ class FunctionInfo:
             self.var_list
         )
 
-class DwarfPaser:
+class DwarfParser:
     module_info = None
     function_info = None # tmp info
     elffile = None
@@ -241,7 +241,7 @@ class DwarfPaser:
 def process_file(filename):
     print('Processing file:', filename)
 
-    dp = DwarfPaser(filename)
+    dp = DwarfParser(filename)
     
     for CU in dp.cu_iterator():
         dp.set_cu(CU)
