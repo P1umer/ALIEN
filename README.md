@@ -11,6 +11,6 @@ This script will analysis the DWARF information of the given ELF file, and will 
 ```
 This IDA-python script will produce `.ida.json` file contains the analytical result of IDA in the same folder.
 ```
-python3 analysis.py <path_of_the_ELF>
+python3 module_analysis.py <path_of_the_ELF>
 ```
-If you run the first two steps and successfully get `.dwarf.json` as well as `.ida.json` file, then this `analysis.py` script will perform comprehensive analysis of these two. The result will be stored in `.ans.json` file.
+If you run the first two steps and successfully get `.dwarf.json` as well as `.ida.json` file, then this `module_analysis.py` script will perform comprehensive analysis of these two. The result will be stored in `.ans.json` file.

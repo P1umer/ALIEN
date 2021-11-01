@@ -91,41 +91,7 @@ class FunctionInfo:
             "dwarf_num":self.dwarf_num,
             "dwarf_none_num":self.dwarf_none_num
         })
-    # def clear_cache(self):
-    #     self.func_name=None
-    #     self.ida_num =0
-    #     self.ida_identified_num = 0
-    #     self.ida_unknown = 0 
-    #     self.ida_unidentified_num = 0
-    #     self.dwarf_num=0
-    #     self.dwarf_none_num = 0
 
-
-
-
-# ugly code
-# def clear_cache():
-#     global func_name,ida_num,ida_identified_num,ida_unknown,ida_unidentified_num,dwarf_num,dwarf_none
-#     func_name=None
-#     ida_num =0
-#     ida_identified_num = 0
-#     ida_unknown = 0 
-#     ida_unidentified_num = 0 
-#     dwarf_num=0
-#     dwarf_none = 0
-
-# def serialize():
-#     global func_name,ida_num,ida_identified_num,ida_unknown,ida_unidentified_num,dwarf_num,dwarf_none
-#     global func_info_list
-#     return func_info_list.append({
-#         "func_name":func_name,
-#         "ida_num":ida_num,
-#         "ida_identified_num":ida_identified_num,
-#         "ida_unknown":ida_unknown,
-#         "ida_unidentified_num":ida_unidentified_num,
-#         "dwarf_num":dwarf_num,
-#         "dwarf_none":dwarf_none
-#     })
 
 def find_dwarf_func(function_info,dfunc_list,fname):
     function_info.func_name = fname
