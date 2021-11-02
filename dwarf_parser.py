@@ -206,9 +206,16 @@ class DwarfParser:
             loc_desc = describe_DWARF_expr(loc.loc_expr,self.dwarfinfo.structs, self.cu.cu_offset)
         elif isinstance(loc, list):
             loc_desc = self.__show_loclist(loc,self.dwarfinfo,self.cu.cu_offset)
+        loc_type = self.__location_type(loc_desc)
 
-        return loc_desc
+        return {"loc_desc":loc_desc,"loc_type":loc_type}
     
+    def __location_type(self,desc):
+        # stack 
+        # register
+        # polymorphism
+        # Need regular expressions to handle different instance type of desc
+        return 'polymorphism'
 
     def __check_local_variable(self,desc):
 
