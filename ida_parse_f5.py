@@ -31,7 +31,8 @@ def ida_get_lvars(cfunc):
     vlist=[{
         "name":lv.name,
         "hasdwarf":lv.has_user_info,
-        "isargs":lv.is_arg_var
+        "isargs":lv.is_arg_var,
+        "isreg":lv.is_reg_var()
         } for lv in lvars]
     # print(lv.name,lv.has_user_info)
     return vlist
