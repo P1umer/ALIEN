@@ -181,18 +181,20 @@ class DwarfParser:
             print('[-] variable has no DW_AT_name',die.attributes)
             name = b""
             pass
-        ldesc = self.__location_description(die)
+        loc = self.__location(die)
         # Todo: add stack/reg check here
-        if not self.__check_local_variable(ldesc):
+        if not loc:
+            return
+        elif not self.__check_local_variable(loc['loc_desc']):
             print('[+] Global Variable: %s' % name)
             return
         elif not self.scope_layers:
             raise RuntimeError('Local Variable Ignored',name)
         else:
-            self.function_info.add_var_info(name,ldesc)
+            self.function_info.add_var_info(name,loc['loc_desc'])
         return 
 
-    def __location_description(self,die):
+    def __location(self,die):
         assert (die.tag=='DW_TAG_variable'), "not variable"
 
         try:
@@ -203,12 +205,12 @@ class DwarfParser:
             print('[-] There are no DW_AT_location in variable')
             return None
         if isinstance(loc, LocationExpr):
-            loc_desc = describe_DWARF_expr(loc.loc_expr,self.dwarfinfo.structs, self.cu.cu_offset)
+            ldesc = describe_DWARF_expr(loc.loc_expr,self.dwarfinfo.structs, self.cu.cu_offset)
         elif isinstance(loc, list):
-            loc_desc = self.__show_loclist(loc,self.dwarfinfo,self.cu.cu_offset)
-        loc_type = self.__location_type(loc_desc)
+            ldesc = self.__show_loclist(loc,self.dwarfinfo,self.cu.cu_offset)
+        ltype = self.__location_type(ldesc)
 
-        return {"loc_desc":loc_desc,"loc_type":loc_type}
+        return {"loc_desc":ldesc,"loc_type":ltype}
     
     def __location_type(self,desc):
         # stack 
