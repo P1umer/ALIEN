@@ -69,10 +69,11 @@ class FunctionInfo:
     def clear_var_list(self):
         self.var_list = []
     
-    def add_var_info(self,vname,detail):
+    def add_var_info(self,vname,detail,ltype):
         self.var_list.append({
             "name":bytes2str(vname),
-            "details":detail
+            "details":detail,
+            "type":ltype
         })
     
     def serialize(self,minfo):
@@ -191,7 +192,7 @@ class DwarfParser:
         elif not self.scope_layers:
             raise RuntimeError('Local Variable Ignored',name)
         else:
-            self.function_info.add_var_info(name,loc['loc_desc'])
+            self.function_info.add_var_info(name,loc['loc_desc'],loc['loc_type'])
         return 
 
     def __location(self,die):
@@ -213,11 +214,13 @@ class DwarfParser:
         return {"loc_desc":ldesc,"loc_type":ltype}
     
     def __location_type(self,desc):
-        # stack 
-        # register
-        # polymorphism
-        # Need regular expressions to handle different instance type of desc
-        return 'polymorphism'
+        ref = 0
+        if 'DW_OP_reg' in desc:
+            ref = ref | 1
+        if 'DW_OP_fbreg' in desc:
+            ref = ref | 2
+        data=['None','Reg',"Stack","Poly"]
+        return data[ref]
 
     def __check_local_variable(self,desc):
 
@@ -235,8 +238,7 @@ class DwarfParser:
         d = []
         for loc_entity in loclist:
             if isinstance(loc_entity, LocationEntry):
-                d.append('%s <<%s>>' % (
-                    loc_entity,
+                d.append('<<%s>>' % (
                     describe_DWARF_expr(loc_entity.loc_expr, dwarfinfo.structs, cu_offset)))
             else:
                 d.append(str(loc_entity))
