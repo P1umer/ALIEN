@@ -22,6 +22,7 @@ class ModuleInfo:
     dwarf_reg_num_total = 0
     dwarf_stack_num_total = 0
     dwarf_poly_num_total = 0
+    dwarf_unknown_num_total = 0
     func_info_list = []
 
     def add_func_info(self,func_name,
@@ -29,6 +30,7 @@ class ModuleInfo:
                     dwarf_reg_num,
                     dwarf_stack_num,
                     dwarf_poly_num,
+                    dwarf_unknown_num,
                     var_list):
 
         self.dwarf_num_total+=dwarf_num
@@ -36,6 +38,7 @@ class ModuleInfo:
         self.dwarf_reg_num_total+=dwarf_reg_num
         self.dwarf_stack_num_total+=dwarf_stack_num
         self.dwarf_poly_num_total+=dwarf_poly_num
+        self.dwarf_unknown_num_total+=dwarf_unknown_num
 
         return self.func_info_list.append({
             "function_name":bytes2str(func_name),
@@ -44,6 +47,7 @@ class ModuleInfo:
             "dwarf_reg_num":dwarf_reg_num,
             "dwarf_stack_num":dwarf_stack_num,
             "dwarf_poly_num":dwarf_poly_num,
+            "dwarf_unknown_num":dwarf_unknown_num,
             "var_list":var_list
         })
 
@@ -63,7 +67,18 @@ class FunctionInfo:
     dwarf_reg_num = 0
     dwarf_stack_num = 0
     dwarf_poly_num = 0
+    dwarf_unknown_num = 0
     var_list = []
+
+    def __init__(self):
+        self.func_name=None
+        self.dwarf_num = 0
+        self.dwarf_none_num = 0
+        self.dwarf_reg_num = 0
+        self.dwarf_stack_num = 0
+        self.dwarf_poly_num = 0
+        self.dwarf_unknown_num =0
+        self.var_list = []
     
     def set_func_name(self,name):
         self.func_name = name
@@ -77,12 +92,16 @@ class FunctionInfo:
     def __add_dwarf_poly_num(self):
         self.dwarf_poly_num+=1
     
+    def __add_dwarf_unknown_num(self):
+        self.dwarf_unknown_num+=1
+    
     def __statistics(self,vname,ltype):
         self.dwarf_num+=1
         if vname=="":
             self.dwarf_none_num+=1
-        assert (ltype!="None"),"Dwarf variable is neither in STACK nor in REGISTER"
+        # assert (ltype!="None"),"Dwarf variable is neither in STACK nor in REGISTER"
         return {
+            "None": (self.__add_dwarf_unknown_num),
             "Reg": (self.__add_dwarf_reg_num),
             "Stack": (self.__add_dwarf_stack_num),
             "Poly": (self.__add_dwarf_poly_num)
@@ -104,6 +123,7 @@ class FunctionInfo:
             self.dwarf_reg_num,
             self.dwarf_stack_num,
             self.dwarf_poly_num,
+            self.dwarf_unknown_num,
             self.var_list
         )
 
