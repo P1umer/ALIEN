@@ -100,6 +100,8 @@ class FunctionInfo:
         if bytes2str(vname)=="":
             print("dwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_num")
             self.dwarf_none_num+=1
+            # Just return with no further handle of variable type
+            return 
         # assert (ltype!="None"),"Dwarf variable is neither in STACK nor in REGISTER"
         return {
             "None": (self.__add_dwarf_unknown_num),
