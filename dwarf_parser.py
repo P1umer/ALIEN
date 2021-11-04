@@ -67,26 +67,29 @@ class FunctionInfo:
     
     def set_func_name(self,name):
         self.func_name = name
+
+    def __add_dwarf_reg_num(self):
+        self.dwarf_reg_num+=1
     
-    def get_func_name(self):
-        return self.func_name
+    def __add_dwarf_stack_num(self):
+        self.dwarf_stack_num+=1
     
-    def set_dwarf_num(self,num):
-        self.dwarf_num = num
+    def __add_dwarf_poly_num(self):
+        self.dwarf_poly_num+=1
     
-    def get_dwarf_num(self):
-        return self.dwarf_num
-    
-    def set_dwarf_none_num(self,num):
-        self.dwarf_none_num = num
-    
-    def get_dwarf_none_num(self):
-        return self.dwarf_none_num
-    
-    def clear_var_list(self):
-        self.var_list = []
+    def __statistics(self,vname,ltype):
+        self.dwarf_num+=1
+        if vname=="":
+            self.dwarf_none_num+=1
+        assert (ltype!="None"),"Dwarf variable is neither in STACK nor in REGISTER"
+        return {
+            "Reg": (self.__add_dwarf_reg_num),
+            "Stack": (self.__add_dwarf_stack_num),
+            "Poly": (self.__add_dwarf_poly_num)
+        }[ltype]()
     
     def add_var_info(self,vname,detail,ltype):
+        self.__statistics(vname,ltype)
         self.var_list.append({
             "name":bytes2str(vname),
             "details":detail,
