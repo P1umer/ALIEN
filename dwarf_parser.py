@@ -97,7 +97,8 @@ class FunctionInfo:
     
     def __statistics(self,vname,ltype):
         self.dwarf_num+=1
-        if vname=="":
+        if bytes2str(vname)=="":
+            print("dwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_num")
             self.dwarf_none_num+=1
         # assert (ltype!="None"),"Dwarf variable is neither in STACK nor in REGISTER"
         return {
