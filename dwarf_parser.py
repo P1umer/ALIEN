@@ -19,17 +19,31 @@ class ModuleInfo:
 
     dwarf_num_total = 0
     dwarf_none_num_total = 0
+    dwarf_reg_num_total = 0
+    dwarf_stack_num_total = 0
+    dwarf_poly_num_total = 0
     func_info_list = []
 
     def add_func_info(self,func_name,
-                    dwarf_num,dwarf_none_num,var_list):
+                    dwarf_num,dwarf_none_num,
+                    dwarf_reg_num,
+                    dwarf_stack_num,
+                    dwarf_poly_num,
+                    var_list):
 
         self.dwarf_num_total+=dwarf_num
         self.dwarf_none_num_total+=dwarf_none_num
+        self.dwarf_reg_num_total+=dwarf_reg_num
+        self.dwarf_stack_num_total+=dwarf_stack_num
+        self.dwarf_poly_num_total+=dwarf_poly_num
+
         return self.func_info_list.append({
             "function_name":bytes2str(func_name),
             "dwarf_num":dwarf_num,
             "dwarf_none_num":dwarf_none_num,
+            "dwarf_reg_num":dwarf_reg_num,
+            "dwarf_stack_num":dwarf_stack_num,
+            "dwarf_poly_num":dwarf_poly_num,
             "var_list":var_list
         })
 
@@ -46,6 +60,9 @@ class FunctionInfo:
     func_name=None
     dwarf_num = 0
     dwarf_none_num = 0
+    dwarf_reg_num = 0
+    dwarf_stack_num = 0
+    dwarf_poly_num = 0
     var_list = []
     
     def set_func_name(self,name):
@@ -81,6 +98,9 @@ class FunctionInfo:
             self.func_name,
             self.dwarf_num,
             self.dwarf_none_num,
+            self.dwarf_reg_num,
+            self.dwarf_stack_num,
+            self.dwarf_poly_num,
             self.var_list
         )
 
