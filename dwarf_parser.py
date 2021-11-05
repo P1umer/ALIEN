@@ -55,7 +55,11 @@ class ModuleInfo:
         return {
             "ModuleInfo":{
                 "dwarf_num_total":self.dwarf_num_total,
-                "dwarf_none_num_total":self.dwarf_none_num_total
+                "dwarf_none_num_total":self.dwarf_none_num_total,
+                "dwarf_reg_num_total":self.dwarf_reg_num_total,
+                "dwarf_stack_num_total":self.dwarf_stack_num_total,
+                "dwarf_poly_num_total":self.dwarf_poly_num_total,
+                "dwarf_unknown_num_total":self.dwarf_unknown_num_total
             },
             "FunctionInfo":self.func_info_list
         }
