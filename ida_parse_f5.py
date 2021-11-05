@@ -26,7 +26,8 @@ class ModuleInfo:
                     ida_stack_num,
                     # dwarf_poly_num,
                     # ida_unknown_num,
-                    var_list):
+                    var_list,
+                    code):
 
         self.ida_num_total+=ida_num
         self.ida_none_num_total+=ida_none_num
@@ -42,7 +43,8 @@ class ModuleInfo:
             "ida_reg_num":ida_reg_num,
             "ida_stack_num":ida_stack_num,
             # "ida_unknown_num":ida_unknown_num,
-            "var_list":var_list
+            "var_list":var_list,
+            "code":code
         })
 
     def serialize(self):
@@ -140,16 +142,10 @@ class FunctionInfo:
             self.ida_stack_num,
             # self.ida_poly_num,
             # self.ida_unknown_num,
-            self.var_list
+            self.var_list,
+            self.code
         )
 
-def serialize(fname,vlist,code):
-    global func_list
-    return func_list.append({
-        "function_name":fname,
-        "var_list":vlist,
-        "code":code
-    })
 
 def ida_get_code(cfunc):
     if cfunc is None:
