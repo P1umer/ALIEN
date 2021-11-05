@@ -90,13 +90,19 @@ class FunctionInfo:
     
     def __add_ida_stack_num(self):
         self.ida_stack_num+=1
+
+    
+    def __add_ida_has_dwarf(self):
+        self.ida_has_dwarf+=1
     
     # def __add_ida_unknown_num(self):
     #     self.ida_unknown_num+=1
 
     
-    def __statistics(self,ltype):
+    def __statistics(self,hasdwarf,ltype):
         self.ida_num+=1
+        if hasdwarf:
+            self.__add_ida_has_dwarf()
         assert (ltype!="None"),"ida variable is neither in STACK nor in REGISTER"
         return {
             # "None": (self.__add_ida_unknown_num),
@@ -105,11 +111,11 @@ class FunctionInfo:
             # "Poly": (self.__add_ida_poly_num)
         }[ltype]()
     
-    def add_var_info(self,vname,isargs,ltype):
-        self.__statistics(ltype)
+    def add_var_info(self,vname,hasdwarf,ltype):
+        self.__statistics(hasdwarf,ltype)
         self.var_list.append({
             "name":vname,
-            "isargs":isargs,
+            "hasdwarf":hasdwarf,
             "type":ltype
         })
     
@@ -154,9 +160,11 @@ def ida_get_lvars(cfunc,finfo):
         return False
     lvars = cfunc.get_lvars()
     for lv in lvars:
+        if lv.is_arg_var:
+            continue
         ltype = check_location_type(lv)
         finfo.add_var_info(lv.name,
-                        lv.is_arg_var,
+                        lv.has_user_info,
                         ltype)
 
 
