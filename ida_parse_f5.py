@@ -14,7 +14,7 @@ class ModuleInfo:
     ida_reg_num_total = 0
     ida_stack_num_total = 0
     # ida_poly_num_total = 0
-    ida_unknown_num_total = 0
+    # ida_unknown_num_total = 0
     func_info_list = []
 
     def add_func_info(self,func_name,
@@ -22,7 +22,7 @@ class ModuleInfo:
                     ida_reg_num,
                     ida_stack_num,
                     # dwarf_poly_num,
-                    ida_unknown_num,
+                    # ida_unknown_num,
                     var_list):
 
         self.ida_num_total+=ida_num
@@ -30,7 +30,7 @@ class ModuleInfo:
         self.ida_reg_num_total+=ida_reg_num
         self.ida_stack_num_total+=ida_stack_num
         # self.dwarf_poly_num_total+=dwarf_poly_num
-        self.ida_unknown_num_total+=ida_unknown_num
+        # self.ida_unknown_num_total+=ida_unknown_num
 
         return self.func_info_list.append({
             "function_name":func_name,
@@ -38,7 +38,7 @@ class ModuleInfo:
             "ida_has_dwarf":ida_has_dwarf,
             "ida_reg_num":ida_reg_num,
             "ida_stack_num":ida_stack_num,
-            "ida_unknown_num":ida_unknown_num,
+            # "ida_unknown_num":ida_unknown_num,
             "var_list":var_list
         })
 
@@ -60,7 +60,7 @@ class FunctionInfo:
     ida_reg_num = 0
     ida_stack_num = 0
     # ida_poly_num = 0
-    ida_unknown_num = 0
+    # ida_unknown_num = 0
     var_list = []
     code = None
 
@@ -70,7 +70,7 @@ class FunctionInfo:
         self.ida_has_dwarf =0
         self.ida_reg_num = 0
         self.ida_stack_num = 0
-        self.ida_unknown_num =0
+        # self.ida_unknown_num =0
         self.var_list = []
         self.code=None
 
@@ -91,15 +91,15 @@ class FunctionInfo:
     def __add_ida_stack_num(self):
         self.ida_stack_num+=1
     
-    def __add_ida_unknown_num(self):
-        self.ida_unknown_num+=1
+    # def __add_ida_unknown_num(self):
+    #     self.ida_unknown_num+=1
 
     
     def __statistics(self,ltype):
         self.ida_num+=1
-        # assert (ltype!="None"),"ida variable is neither in STACK nor in REGISTER"
+        assert (ltype!="None"),"ida variable is neither in STACK nor in REGISTER"
         return {
-            "None": (self.__add_ida_unknown_num),
+            # "None": (self.__add_ida_unknown_num),
             "Reg": (self.__add_ida_reg_num),
             "Stack": (self.__add_ida_stack_num),
             # "Poly": (self.__add_ida_poly_num)
@@ -121,7 +121,7 @@ class FunctionInfo:
             self.ida_reg_num,
             self.ida_stack_num,
             # self.ida_poly_num,
-            self.ida_unknown_num,
+            # self.ida_unknown_num,
             self.var_list
         )
 
