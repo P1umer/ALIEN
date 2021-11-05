@@ -10,6 +10,7 @@ func_list=[]
 class ModuleInfo:
 
     ida_num_total = 0
+    ida_none_num_total =0
     ida_has_dwarf_total = 0
     ida_reg_num_total = 0
     ida_stack_num_total = 0
@@ -18,7 +19,9 @@ class ModuleInfo:
     func_info_list = []
 
     def add_func_info(self,func_name,
-                    ida_num,ida_has_dwarf,
+                    ida_num,
+                    ida_none_num,
+                    ida_has_dwarf,
                     ida_reg_num,
                     ida_stack_num,
                     # dwarf_poly_num,
@@ -26,6 +29,7 @@ class ModuleInfo:
                     var_list):
 
         self.ida_num_total+=ida_num
+        self.ida_none_num_total+=ida_none_num
         self.ida_has_dwarf_total+=ida_has_dwarf
         self.ida_reg_num_total+=ida_reg_num
         self.ida_stack_num_total+=ida_stack_num
@@ -35,6 +39,7 @@ class ModuleInfo:
         return self.func_info_list.append({
             "function_name":func_name,
             "ida_num":ida_num,
+            "ida_none_num":ida_none_num,
             "ida_has_dwarf":ida_has_dwarf,
             "ida_reg_num":ida_reg_num,
             "ida_stack_num":ida_stack_num,
@@ -46,6 +51,7 @@ class ModuleInfo:
         return {
             "ModuleInfo":{
                 "ida_num_total":self.ida_num_total,
+                "ida_none_num_total":self.ida_none_num_total,
                 "ida_has_dwarf_total":self.ida_has_dwarf_total,
                 "ida_reg_num_total":self.ida_reg_num_total,
                 "ida_stack_num_total":self.ida_stack_num_total
@@ -56,6 +62,7 @@ class ModuleInfo:
 class FunctionInfo:
     func_name=None
     ida_num = 0
+    ida_none_num=0
     ida_has_dwarf = 0
     ida_reg_num = 0
     ida_stack_num = 0
@@ -67,6 +74,7 @@ class FunctionInfo:
     def __init__(self):
         self.func_name=None
         self.ida_num = 0
+        self.ida_none_num=0
         self.ida_has_dwarf =0
         self.ida_reg_num = 0
         self.ida_stack_num = 0
@@ -94,13 +102,18 @@ class FunctionInfo:
     
     def __add_ida_has_dwarf(self):
         self.ida_has_dwarf+=1
+
+    def __add_ida_none_num(self):
+        self.ida_none_num+=1
     
     # def __add_ida_unknown_num(self):
     #     self.ida_unknown_num+=1
 
     
-    def __statistics(self,hasdwarf,ltype):
+    def __statistics(self,vname,hasdwarf,ltype):
         self.ida_num+=1
+        if vname=="":
+            self.__add_ida_none_num()
         if hasdwarf:
             self.__add_ida_has_dwarf()
         assert (ltype!="None"),"ida variable is neither in STACK nor in REGISTER"
@@ -112,7 +125,7 @@ class FunctionInfo:
         }[ltype]()
     
     def add_var_info(self,vname,hasdwarf,ltype):
-        self.__statistics(hasdwarf,ltype)
+        self.__statistics(vname,hasdwarf,ltype)
         self.var_list.append({
             "name":vname,
             "hasdwarf":hasdwarf,
@@ -123,6 +136,7 @@ class FunctionInfo:
         return minfo.add_func_info(
             self.func_name,
             self.ida_num,
+            self.ida_none_num,
             self.ida_has_dwarf,
             self.ida_reg_num,
             self.ida_stack_num,
