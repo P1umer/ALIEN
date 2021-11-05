@@ -27,43 +27,86 @@ import json
 import sys
 
 class ModuleInfo:
-    ida_num_total =0
-    ida_identified_num_total = 0
-    ida_unknown_total = 0
-    ida_unidentified_num_total = 0
+
+    # ida info
+    ida_num_total = 0
+    ida_none_num_total =0
+    ida_has_dwarf_total = 0
+    ida_reg_num_total = 0
+    ida_stack_num_total = 0
+
+    # dwarf info
     dwarf_num_total = 0
     dwarf_none_num_total = 0
+    dwarf_reg_num_total = 0
+    dwarf_stack_num_total = 0
+    dwarf_poly_num_total = 0
+    dwarf_unknown_num_total = 0
+
+    # ans info
+    ans_ida_identified_num_total =0 
+
     func_info_list = []
 
-    def add_func_info(self,func_name,ida_num,ida_identified_num,
-                    ida_unknown,ida_unidentified_num,
-                    dwarf_num,dwarf_none_num):
-        self.ida_num_total+=ida_num
-        self.ida_identified_num_total+=ida_identified_num
-        self.ida_unknown_total+=ida_unknown
-        self.ida_unidentified_num_total+=ida_unidentified_num
-        self.dwarf_num_total+=dwarf_num
-        self.dwarf_none_num_total+=dwarf_none_num
-        
+
+    def add_func_info(self,func_name,ida_num,ida_none_num,
+                    ida_has_dwarf,ida_reg_num,ida_stack_num,
+                    dwarf_num,dwarf_none_num,dwarf_reg_num,
+                    dwarf_stack_num,dwarf_poly_num,dwarf_unknown_num,
+                    ans_ida_identified_num):
+
+        self.ans_ida_identified_num_total+=ans_ida_identified_num
+
         return self.func_info_list.append({
             "func_name":func_name,
             "ida_num":ida_num,
-            "ida_identified_num":ida_identified_num,
-            "ida_unknown":ida_unknown,
-            "ida_unidentified_num":ida_unidentified_num,
+            "ida_none_num":ida_none_num,
+            "ida_has_dwarf":ida_has_dwarf,
+            "ida_reg_num":ida_reg_num,
+            "ida_stack_num":ida_stack_num,
+
             "dwarf_num":dwarf_num,
-            "dwarf_none_num":dwarf_none_num
+            "dwarf_none_num":dwarf_none_num,
+            "dwarf_reg_num":dwarf_reg_num,
+            "dwarf_stack_num":dwarf_stack_num,
+            "dwarf_poly_num":dwarf_poly_num,
+            "dwarf_unknown_num":dwarf_unknown_num,
+
+            "ans_ida_identified_num":ans_ida_identified_num,
+
         })
+    def __init__(self,ijson,djson):
+        i,d=ijson['ModuleInfo'],djson['ModuleInfo']
+
+        self.ida_num_total=i['ida_num_total']
+        self.ida_none_num_total=i['ida_none_num_total']
+        self.ida_has_dwarf_total=i['ida_has_dwarf_total']
+        self.ida_reg_num_total=i['ida_reg_num_total']
+        self.ida_stack_num_total=i['ida_stack_num_total']
+        self.dwarf_num_total=d['dwarf_num_total']
+        self.dwarf_none_num_total=d['dwarf_none_num_total']
+        self.dwarf_reg_num_total=d['dwarf_reg_num_total']
+        self.dwarf_stack_num_total=d['dwarf_stack_num_total']
+        self.dwarf_poly_num_total=d['dwarf_poly_num_total']
+        self.dwarf_unknown_num_total=d['dwarf_unknown_num_total']
+        pass
 
     def serialize(self):
         return {
             "ModuleInfo":{
                 "ida_num_total":self.ida_num_total,
-                "ida_identified_num_total":self.ida_identified_num_total,
-                "ida_unknown_total":self.ida_unknown_total,
-                "ida_unidentified_num_total":self.ida_unidentified_num_total,
+                "ida_none_num_total":self.ida_none_num_total,
+                "ida_has_dwarf_total":self.ida_has_dwarf_total,
+                "ida_reg_num_total":self.ida_reg_num_total,
+                "ida_stack_num_total":self.ida_stack_num_total,
                 "dwarf_num_total":self.dwarf_num_total,
-                "dwarf_none_num_total":self.dwarf_none_num_total
+                "dwarf_none_num_total":self.dwarf_none_num_total,
+                "dwarf_reg_num_total":self.dwarf_reg_num_total,
+                "dwarf_stack_num_total":self.dwarf_stack_num_total,
+                "dwarf_poly_num_total":self.dwarf_poly_num_total,
+                "dwarf_unknown_num_total":self.dwarf_unknown_num_total,
+                "ans_ida_identified_num_total":self.ans_ida_identified_num_total
+
             },
             "FunctionInfo":self.func_info_list
         }
@@ -71,85 +114,72 @@ class ModuleInfo:
 class FunctionInfo:
 
     func_name=None
-    ida_num =0
-    ida_identified_num = 0
-    ida_unknown = 0 # part of ida_unidentified_num + ida_add
-    ida_unidentified_num = 0 # dwarf_num - dwarf_none - ida_identified_num
+
+    ida_num = 0
+    ida_none_num=0
+    ida_has_dwarf = 0
+    ida_reg_num = 0
+    ida_stack_num = 0
+
     dwarf_num = 0
     dwarf_none_num = 0
-    
-    def set_func_name(self,name):
-        self.func_name = name
-    
-    def set_ida_num(self,num):
-        self.ida_num = num
-    
-    def get_ida_num(self):
-        return self.ida_num
-    
-    def set_ida_identified_num(self,num):
-        self.ida_identified_num = num
-    
-    def get_ida_identified_num(self):
-        return self.ida_identified_num
-    
-    def add_ida_identified_num(self,num):
-        self.ida_identified_num+=num
+    dwarf_reg_num = 0
+    dwarf_stack_num = 0
+    dwarf_poly_num = 0
+    dwarf_unknown_num = 0
 
-    def set_ida_unknown(self,num):
-        self.ida_unknown = num
+    ans_ida_identified_num = 0
+
+
+
+    def __init__(self,ifunc):
+        self.func_name = ifunc['function_name']
+        self.ida_num = ifunc['ida_num']
+        self.ida_none_num = ifunc['ida_none_num']
+        self.ida_has_dwarf = ifunc['ida_has_dwarf']
+        self.ida_reg_num = ifunc['ida_reg_num']
+        self.ida_stack_num = ifunc['ida_stack_num']
+        pass
     
-    def get_ida_unknown(self):
-        return self.ida_unknown
+    def merge(self,dfunc):
+        self.dwarf_num = dfunc['dwarf_num']
+        self.dwarf_none_num = dfunc['dwarf_none_num']
+        self.dwarf_reg_num = dfunc['dwarf_reg_num']
+        self.dwarf_stack_num = dfunc['dwarf_stack_num']
+        self.dwarf_poly_num = dfunc['dwarf_poly_num']
+        self.dwarf_unknown_num = dfunc['dwarf_unknown_num']
+        pass
     
-    def set_ida_unidentified_num(self,num):
-        self.ida_unidentified_num = num
     
-    def get_ida_unidentified_num(self):
-        return self.ida_unidentified_num
-    
-    def set_dwarf_num(self,num):
-        self.dwarf_num = num
-    
-    def get_dwarf_num(self):
-        return self.dwarf_num
-    
-    def set_dwarf_none_num(self,num):
-        self.dwarf_none_num = num
-    
-    def get_dwarf_none_num(self):
-        return self.dwarf_none_num
+    def add_ans_ida_identified_num(self,num):
+        self.ans_ida_identified_num+=num
+        pass
+
     
     def serialize(self,minfo):
         return minfo.add_func_info(
             self.func_name,
             self.ida_num,
-            self.ida_identified_num,
-            self.ida_unknown,
-            self.ida_unidentified_num,
+            self.ida_none_num,
+            self.ida_has_dwarf,
+            self.ida_reg_num,
+            self.ida_stack_num,
             self.dwarf_num,
-            self.dwarf_none_num
+            self.dwarf_none_num,
+            self.dwarf_reg_num,
+            self.dwarf_stack_num,
+            self.dwarf_poly_num,
+            self.dwarf_unknown_num,
+            self.ans_ida_identified_num
         )
 
 
-def find_dwarf_func(function_info,dfunc_list,fname):
-    function_info.set_func_name(fname)
+def find_dwarf_func(dfunc_list,fname):
     # search in dfunc_list
     candidates = [df for df in dfunc_list if df['function_name']==fname]
     # check number of candidates, must be 1
     assert len(candidates)<=1,"Error dwarf function number"
     return candidates[0]
-    
-def analysis_dfunc(finfo, dfunc):
-    finfo.set_dwarf_num(len(dfunc['var_list']))
-    finfo.set_dwarf_none_num(len([dv for dv in dfunc['var_list'] if dv['name']==""]))
-    return
-
-def deep_analysis_ifunc(finfo):
-    # maybe negative since ida_identified_num stands for number all IDENTIFIED vars
-    # but the vars may be duplicate
-    finfo.set_ida_unidentified_num(finfo.get_dwarf_num() - finfo.get_dwarf_none_num() - finfo.get_ida_identified_num())
-    finfo.set_ida_unknown(finfo.get_ida_num() - finfo.get_ida_identified_num())
 
 def intersect_varlist(finfo,ilist,dlist):
     var_map={}
@@ -157,34 +187,28 @@ def intersect_varlist(finfo,ilist,dlist):
         var_map[dl['name']]=1
     for il in ilist:
         print(il)
-        if il['name']=='' or il['isargs']==True or il['hasdwarf']==False:
+        if il['name']==''  or il['hasdwarf']==False:
             continue
         # assert var_map[il['name']],"IDA must has symbol here"
-        finfo.add_ida_identified_num(1)
-    return 
-
-def analysis_ifunc(finfo,ifunc,dfunc):
-    finfo.set_ida_num(len(ifunc['var_list']))
-    intersect_varlist(finfo,
-        ifunc['var_list'],
-        dfunc['var_list'])
-    deep_analysis_ifunc(finfo)
-    return 
+        finfo.add_ans_ida_identified_num(1)
+    pass 
 
 def analysis(ijson_file,djson_file):
     print(ijson_file,djson_file)
     with open(ijson_file, 'rb') as ijson, open(djson_file, 'rb') as djson:
-        ifunc_list,dfunc_list= json.load(ijson),json.load(djson)['FunctionInfo']
-        minfo = ModuleInfo()
+        ijson,djson = json.load(ijson),json.load(djson)
+        ifunc_list,dfunc_list= ijson['FunctionInfo'],djson['FunctionInfo']
+
+        minfo = ModuleInfo(ijson,djson)
         for ifunc in ifunc_list:
-            finfo = FunctionInfo()
+            finfo = FunctionInfo(ifunc)
             try:
-                dfunc = find_dwarf_func(finfo,dfunc_list,ifunc['function_name'])
+                dfunc = find_dwarf_func(dfunc_list,finfo.func_name)
             except:
-                print("[*] Cannot find function {} in dwarf".format(ifunc['function_name']))
+                print("[*] Cannot find function {} in dwarf".format(finfo.func_name))
                 continue
-            analysis_dfunc(finfo,dfunc)
-            analysis_ifunc(finfo,ifunc,dfunc)
+            finfo.merge(dfunc)
+            intersect_varlist(finfo,ifunc['var_list'],dfunc['var_list'])
             finfo.serialize(minfo)
         return minfo.serialize()
         
