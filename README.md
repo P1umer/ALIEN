@@ -1,5 +1,5 @@
-# ALIEN: idA Local varIables rEcogNizer
-`ALIEN` is an IDA Pro plugin that allows the user to get more information about ida local variables with the help of corresponding `DWARF` information.
+# ALIEN: idA Local varIables(or inLine functIons) rEcogNizer
+`ALIEN` is an IDA Pro plugin that allows the user to get more information about ida local variables and inline functions with the help of corresponding `DWARF` information.
 
 ## Usage
 ```
