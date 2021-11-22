@@ -15,6 +15,26 @@ from elftools.dwarf.locationlists import (
 import json,re
 
 
+class cached_property(object):
+    """
+    Descriptor (non-data) for building an attribute on-demand on first use.
+    """
+    def __init__(self, factory):
+        """
+        <factory> is called such: factory(instance) to build the attribute.
+        """
+        self._attr_name = factory.__name__
+        self._factory = factory
+
+    def __get__(self, instance, owner):
+        # Build the attribute.
+        attr = self._factory(instance)
+
+        # Cache the value; hide ourselves.
+        setattr(instance, self._attr_name, attr)
+
+        return attr
+
 class ModuleInfo:
 
     dwarf_num_total = 0
@@ -65,7 +85,8 @@ class ModuleInfo:
         }
 
 class FunctionInfo:
-    func_name=None
+    die = None
+    func_name = None
     dwarf_num = 0
     dwarf_none_num = 0
     dwarf_reg_num = 0
@@ -74,8 +95,10 @@ class FunctionInfo:
     dwarf_unknown_num = 0
     var_list = []
 
-    def __init__(self):
-        self.func_name=None
+    def __init__(self,die):
+        self.die = die
+
+        self.func_name = None
         self.dwarf_num = 0
         self.dwarf_none_num = 0
         self.dwarf_reg_num = 0
@@ -83,7 +106,7 @@ class FunctionInfo:
         self.dwarf_poly_num = 0
         self.dwarf_unknown_num =0
         self.var_list = []
-    
+
     def set_func_name(self,name):
         self.func_name = name
 
@@ -102,7 +125,6 @@ class FunctionInfo:
     def __statistics(self,vname,ltype):
         self.dwarf_num+=1
         if bytes2str(vname)=="":
-            print("dwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_numdwarf_none_num")
             self.dwarf_none_num+=1
             # Just return with no further handle of variable type
             return 
@@ -133,6 +155,7 @@ class FunctionInfo:
             self.dwarf_unknown_num,
             self.var_list
         )
+    
 
 class DwarfParser:
     module_info = None
@@ -168,36 +191,44 @@ class DwarfParser:
             # Create a LocationParser object that parses the DIE attributes and
             # creates objects representing the actual location information.
             self.loc_parser = LocationParser(self.location_lists)
-    
-    def cu_iterator(self):
-        return self.dwarfinfo.iter_CUs()
-    
-    def set_cu(self,cu):
-        self.cu = cu
 
-    def parse_die_node(self,die):
+    def __get_die_at_offset(self, cu, offset):
+        adjusted_offset = cu.cu_offset + offset
+        for die in cu.iter_DIEs():
+            if die.offset == adjusted_offset:
+                return die
 
-        assert (self.scope_layers<=1), "nested function"
-        try:
-            print('DIE id=%s' % die.attributes['DW_AT_name'].value)
-        except:
-            pass
-        
-        if die.tag == 'DW_TAG_subprogram':
-            # Cannot identify the end of function, 
-            # so we have to complete the variables collection here
-            # print(die.attributes['DW_AT_name'].value)
-            self.__parse_func(die)
-            return 
-            # parse_func(die)
-        if die.tag=="DW_TAG_variable":
-            # End point
-            self.__parse_variable(die)
-            return
-            # print(die.attributes['DW_AT_location'].form,die.attributes['DW_AT_name'].value)
-        for child in die.iter_children():
-            self.parse_die_node(child)
+    def __get_attribute_value(self, die, attribute):
+        attr = die.attributes.get(attribute)
+        if attr is not None:
+            return attr.value
 
+    def __specification(self,die):
+        # TODO: Handle all types of references
+        offset = self.__get_attribute_value(die, 'DW_AT_specification')
+        if not offset:
+            return None
+        spec = self.__get_die_at_offset(die.cu, offset)
+        if spec:
+            return spec
+        else:
+            print('WARNING: No die at offset', offset)
+
+    def __get_attribute_recursive(self, die, name):
+        attribute = die.attributes.get(name, None)
+        if attribute:
+            return attribute
+        spec = self.__specification(die)
+        if spec:
+            return self.__get_attribute_recursive(spec,name)
+        return None
+
+    def __get_attribute_value_recursive(self, die, name):
+        attr = self.__get_attribute_recursive(die,name)
+        if attr:
+            return attr.value
+        else:
+            return None
 
     def __enter_func(self):
         self.scope_layers+=1
@@ -206,13 +237,14 @@ class DwarfParser:
         self.scope_layers-=1
 
     def __parse_func(self,die):
-        self.function_info = FunctionInfo()
+        self.function_info = FunctionInfo(die)
         # enter the function
         self.__enter_func()
 
-        try:
-            self.function_info.set_func_name(die.attributes['DW_AT_name'].value)
-        except:
+        name = self.__get_attribute_value_recursive(die,'DW_AT_name')
+        self.function_info.set_func_name(name)
+
+        if name==None:
             self.__exit_func()
             return
         for child in die.iter_children():
@@ -226,18 +258,24 @@ class DwarfParser:
     
     def __parse_variable(self,die):
         assert (self.scope_layers<=1), "nested function"
-        try:
-            name = die.attributes['DW_AT_name'].value
-        except:
-            print('[-] variable has no DW_AT_name',die.attributes)
+        # try:
+        #     name = die.attributes['DW_AT_name'].value
+        # except:
+        #     print('[-] variable has no DW_AT_name',die.attributes)
+        #     name = b""
+        #     pass
+        name = self.__get_attribute_value_recursive(die,'DW_AT_name')
+        if name==None:
+            # print('[-] variable has no DW_AT_name',die.attributes)
             name = b""
             pass
+
         loc = self.__location(die)
         # Todo: add stack/reg check here
         if not loc:
             return
         elif not self.__check_local_variable(loc['loc_desc']):
-            print('[+] Global Variable: %s' % name)
+            # print('[+] Global Variable: %s' % name)
             return
         elif not self.scope_layers:
             raise RuntimeError('Local Variable Ignored',name)
@@ -250,11 +288,12 @@ class DwarfParser:
 
         try:
             loc = self.loc_parser.parse_from_attribute(
-                die.attributes['DW_AT_location'],
+                self.__get_attribute_recursive(die,'DW_AT_location'),
                 self.cu['version'])
         except:
-            print('[-] There are no DW_AT_location in variable')
+            print('[-] There are no DW_AT_location in variable',die)
             return None
+
         if isinstance(loc, LocationExpr):
             ldesc = describe_DWARF_expr(loc.loc_expr,self.dwarfinfo.structs, self.cu.cu_offset)
         elif isinstance(loc, list):
@@ -293,10 +332,38 @@ class DwarfParser:
             else:
                 d.append(str(loc_entity))
         return '\n'.join(s for s in d)
-    
+
+    @cached_property
     def top_die(self):
         top_DIE = self.cu.get_top_DIE()
         return top_DIE
+
+    def cu_iterator(self):
+        return self.dwarfinfo.iter_CUs()
+    
+    def set_cu(self,cu):
+        self.cu = cu
+
+    def parse_die_node(self,die):
+
+        assert (self.scope_layers<=1), "nested function"
+
+        # print(self.__get_attribute_value_recursive(die,'DW_AT_name'))
+        
+        if die.tag == 'DW_TAG_subprogram':
+            # Cannot identify the end of function, 
+            # so we have to complete the variables collection here
+            # print(die.attributes['DW_AT_name'].value)
+            self.__parse_func(die)
+            return 
+            # parse_func(die)
+        if die.tag == "DW_TAG_variable":
+            # End point
+            self.__parse_variable(die)
+            return
+            # print(die.attributes['DW_AT_location'].form,die.attributes['DW_AT_name'].value)
+        for child in die.iter_children():
+            self.parse_die_node(child)
 
     
 def process_file(filename):
@@ -315,7 +382,7 @@ def process_file(filename):
         # Start with the top DIE, the root for this CU's DIE tree
 
         # Display DIEs recursively starting with top_DIE
-        dp.parse_die_node(dp.top_die())
+        dp.parse_die_node(dp.top_die)
     return dp.module_info.serialize()
 
 
