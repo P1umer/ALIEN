@@ -38,7 +38,7 @@ class cached_property(object):
 class ModuleInfo:
     func_num = 0
     inlined_num = 0
-    declared_inlined_num = 0
+    declared_inline_num = 0
     dwarf_num_total = 0
     dwarf_none_num_total = 0
     dwarf_reg_num_total = 0
@@ -47,7 +47,7 @@ class ModuleInfo:
     dwarf_unknown_num_total = 0
     func_info_list = []
 
-    def add_func_info(self,func_name,inlined,declared_inlined,
+    def add_func_info(self,func_name,inlined,declared_inline,
                     dwarf_num,dwarf_none_num,
                     dwarf_reg_num,
                     dwarf_stack_num,
@@ -59,8 +59,8 @@ class ModuleInfo:
 
         if inlined:
             self.inlined_num+=1
-        if declared_inlined:
-            self.declared_inlined_num+=1
+        if declared_inline:
+            self.declared_inline_num+=1
 
         self.dwarf_num_total+=dwarf_num
         self.dwarf_none_num_total+=dwarf_none_num
@@ -72,7 +72,7 @@ class ModuleInfo:
         return self.func_info_list.append({
             "function_name":bytes2str(func_name),
             "inlined":inlined,
-            "declared_inlined":declared_inlined,
+            "declared_inline":declared_inline,
             "dwarf_num":dwarf_num,
             "dwarf_none_num":dwarf_none_num,
             "dwarf_reg_num":dwarf_reg_num,
@@ -87,7 +87,7 @@ class ModuleInfo:
             "ModuleInfo":{
                 "func_num":self.func_num,
                 "inlined_num":self.inlined_num,
-                "declared_inlined_num":self.declared_inlined_num,
+                "declared_inline_num":self.declared_inline_num,
                 "dwarf_num_total":self.dwarf_num_total,
                 "dwarf_none_num_total":self.dwarf_none_num_total,
                 "dwarf_reg_num_total":self.dwarf_reg_num_total,
@@ -101,7 +101,7 @@ class ModuleInfo:
 class FunctionInfo:
     func_name = None
     inlined = False
-    declared_inlined = False
+    declared_inline = False
 
     dwarf_num = 0
     dwarf_none_num = 0
@@ -114,7 +114,7 @@ class FunctionInfo:
     def __init__(self):
         self.func_name = None
         self.inlined = False
-        self.declared_inlined = False
+        self.declared_inline = False
 
         self.dwarf_num = 0
         self.dwarf_none_num = 0
@@ -130,8 +130,8 @@ class FunctionInfo:
     def set_inlined(self):
         self.inlined = True
     
-    def set_declared_inlined(self):
-        self.declared_inlined = True
+    def set_declared_inline(self):
+        self.declared_inline = True
 
 
     def __add_dwarf_reg_num(self):
@@ -172,7 +172,7 @@ class FunctionInfo:
         return minfo.add_func_info(
             self.func_name,
             self.inlined,
-            self.declared_inlined,
+            self.declared_inline,
             self.dwarf_num,
             self.dwarf_none_num,
             self.dwarf_reg_num,
@@ -240,7 +240,7 @@ class DwarfParser:
         if self.__is_inlined(die):
             self.function_info.set_inlined()
         if self.__declared_inline(die):
-            self.function_info.set_declared_inlined()
+            self.function_info.set_declared_inline()
 
         for child in die.iter_children():
             self.parse_die_node(child)
