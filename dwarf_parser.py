@@ -36,7 +36,9 @@ class cached_property(object):
         return attr
 
 class ModuleInfo:
-
+    func_num = 0
+    inlined_num = 0
+    declared_inlined_num = 0
     dwarf_num_total = 0
     dwarf_none_num_total = 0
     dwarf_reg_num_total = 0
@@ -45,13 +47,20 @@ class ModuleInfo:
     dwarf_unknown_num_total = 0
     func_info_list = []
 
-    def add_func_info(self,func_name,
+    def add_func_info(self,func_name,inlined,declared_inlined,
                     dwarf_num,dwarf_none_num,
                     dwarf_reg_num,
                     dwarf_stack_num,
                     dwarf_poly_num,
                     dwarf_unknown_num,
                     var_list):
+        
+        self.func_num+=1
+
+        if inlined:
+            self.inlined_num+=1
+        if declared_inlined:
+            self.declared_inlined_num+=1
 
         self.dwarf_num_total+=dwarf_num
         self.dwarf_none_num_total+=dwarf_none_num
@@ -62,6 +71,8 @@ class ModuleInfo:
 
         return self.func_info_list.append({
             "function_name":bytes2str(func_name),
+            "inlined":inlined,
+            "declared_inlined":declared_inlined,
             "dwarf_num":dwarf_num,
             "dwarf_none_num":dwarf_none_num,
             "dwarf_reg_num":dwarf_reg_num,
@@ -74,6 +85,9 @@ class ModuleInfo:
     def serialize(self):
         return {
             "ModuleInfo":{
+                "func_num":self.func_num,
+                "inlined_num":self.inlined_num,
+                "declared_inlined_num":self.declared_inlined_num,
                 "dwarf_num_total":self.dwarf_num_total,
                 "dwarf_none_num_total":self.dwarf_none_num_total,
                 "dwarf_reg_num_total":self.dwarf_reg_num_total,
@@ -85,8 +99,10 @@ class ModuleInfo:
         }
 
 class FunctionInfo:
-    die = None
     func_name = None
+    inlined = False
+    declared_inlined = False
+
     dwarf_num = 0
     dwarf_none_num = 0
     dwarf_reg_num = 0
@@ -95,10 +111,11 @@ class FunctionInfo:
     dwarf_unknown_num = 0
     var_list = []
 
-    def __init__(self,die):
-        self.die = die
-
+    def __init__(self):
         self.func_name = None
+        self.inlined = False
+        self.declared_inlined = False
+
         self.dwarf_num = 0
         self.dwarf_none_num = 0
         self.dwarf_reg_num = 0
@@ -109,6 +126,13 @@ class FunctionInfo:
 
     def set_func_name(self,name):
         self.func_name = name
+    
+    def set_inlined(self):
+        self.inlined = True
+    
+    def set_declared_inlined(self):
+        self.declared_inlined = True
+
 
     def __add_dwarf_reg_num(self):
         self.dwarf_reg_num+=1
@@ -147,6 +171,8 @@ class FunctionInfo:
     def serialize(self,minfo):
         return minfo.add_func_info(
             self.func_name,
+            self.inlined,
+            self.declared_inlined,
             self.dwarf_num,
             self.dwarf_none_num,
             self.dwarf_reg_num,
@@ -192,44 +218,6 @@ class DwarfParser:
             # creates objects representing the actual location information.
             self.loc_parser = LocationParser(self.location_lists)
 
-    def __get_die_at_offset(self, cu, offset):
-        adjusted_offset = cu.cu_offset + offset
-        for die in cu.iter_DIEs():
-            if die.offset == adjusted_offset:
-                return die
-
-    def __get_attribute_value(self, die, attribute):
-        attr = die.attributes.get(attribute)
-        if attr is not None:
-            return attr.value
-
-    def __specification(self,die):
-        # TODO: Handle all types of references
-        offset = self.__get_attribute_value(die, 'DW_AT_specification')
-        if not offset:
-            return None
-        spec = self.__get_die_at_offset(die.cu, offset)
-        if spec:
-            return spec
-        else:
-            print('WARNING: No die at offset', offset)
-
-    def __get_attribute_recursive(self, die, name):
-        attribute = die.attributes.get(name, None)
-        if attribute:
-            return attribute
-        spec = self.__specification(die)
-        if spec:
-            return self.__get_attribute_recursive(spec,name)
-        return None
-
-    def __get_attribute_value_recursive(self, die, name):
-        attr = self.__get_attribute_recursive(die,name)
-        if attr:
-            return attr.value
-        else:
-            return None
-
     def __enter_func(self):
         self.scope_layers+=1
 
@@ -237,7 +225,7 @@ class DwarfParser:
         self.scope_layers-=1
 
     def __parse_func(self,die):
-        self.function_info = FunctionInfo(die)
+        self.function_info = FunctionInfo()
         # enter the function
         self.__enter_func()
 
@@ -247,6 +235,13 @@ class DwarfParser:
         if name==None:
             self.__exit_func()
             return
+
+        # check if this function is inlined or not
+        if self.__is_inlined(die):
+            self.function_info.set_inlined()
+        if self.__declared_inline(die):
+            self.function_info.set_declared_inlined()
+
         for child in die.iter_children():
             self.parse_die_node(child)
         # exit the function
@@ -333,10 +328,60 @@ class DwarfParser:
                 d.append(str(loc_entity))
         return '\n'.join(s for s in d)
 
+    def __get_die_at_offset(self, cu, offset):
+        adjusted_offset = cu.cu_offset + offset
+        for die in cu.iter_DIEs():
+            if die.offset == adjusted_offset:
+                return die
+
+    def __get_attribute_value(self, die, attribute):
+        attr = die.attributes.get(attribute)
+        if attr is not None:
+            return attr.value
+
+    def __specification(self,die):
+        # TODO: Handle all types of references
+        offset = self.__get_attribute_value(die, 'DW_AT_specification')
+        if not offset:
+            return None
+        spec = self.__get_die_at_offset(die.cu, offset)
+        if spec:
+            return spec
+        else:
+            print('WARNING: No die at offset', offset)
+
+    def __get_attribute_recursive(self, die, name):
+        attribute = die.attributes.get(name, None)
+        if attribute:
+            return attribute
+        spec = self.__specification(die)
+        if spec:
+            return self.__get_attribute_recursive(spec,name)
+        return None
+
+    def __get_attribute_value_recursive(self, die, name):
+        attr = self.__get_attribute_recursive(die,name)
+        if attr:
+            return attr.value
+        else:
+            return None
+
     @cached_property
     def top_die(self):
         top_DIE = self.cu.get_top_DIE()
         return top_DIE
+
+    def __inline_enum(self,die):
+        assert (die.tag=='DW_TAG_subprogram'), "not subprogram"
+        return self.__get_attribute_value_recursive(die,'DW_AT_inline') or 0
+
+    def __is_inlined(self,die):
+        assert (die.tag=='DW_TAG_subprogram'), "not subprogram"
+        return self.__inline_enum(die) in (1, 3)
+
+    def __declared_inline(self,die):
+        assert (die.tag=='DW_TAG_subprogram'), "not subprogram"
+        return self.__inline_enum(die) in (2, 3)
 
     def cu_iterator(self):
         return self.dwarfinfo.iter_CUs()
