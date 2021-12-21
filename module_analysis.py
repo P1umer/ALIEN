@@ -36,6 +36,9 @@ class ModuleInfo:
     ida_stack_num_total = 0
 
     # dwarf info
+    inlined_num = 0
+    declared_inline_num = 0
+    has_inlinee_num = 0
     dwarf_num_total = 0
     dwarf_none_num_total = 0
     dwarf_reg_num_total = 0
@@ -83,6 +86,9 @@ class ModuleInfo:
         self.ida_has_dwarf_total=i['ida_has_dwarf_total']
         self.ida_reg_num_total=i['ida_reg_num_total']
         self.ida_stack_num_total=i['ida_stack_num_total']
+        self.inlined_num=d['inlined_num']
+        self.declared_inline_num=d['declared_inline_num']
+        self.has_inlinee_num=d['has_inlinee_num']
         self.dwarf_num_total=d['dwarf_num_total']
         self.dwarf_none_num_total=d['dwarf_none_num_total']
         self.dwarf_reg_num_total=d['dwarf_reg_num_total']
@@ -99,6 +105,9 @@ class ModuleInfo:
                 "ida_has_dwarf_total":self.ida_has_dwarf_total,
                 "ida_reg_num_total":self.ida_reg_num_total,
                 "ida_stack_num_total":self.ida_stack_num_total,
+                "inlined_num":self.inlined_num,
+                "declared_inline_num":self.declared_inline_num,
+                "has_inlinee_num":self.has_inlinee_num,
                 "dwarf_num_total":self.dwarf_num_total,
                 "dwarf_none_num_total":self.dwarf_none_num_total,
                 "dwarf_reg_num_total":self.dwarf_reg_num_total,
@@ -178,7 +187,7 @@ def find_dwarf_func(dfunc_list,fname):
     # search in dfunc_list
     candidates = [df for df in dfunc_list if df['function_name']==fname]
     # check number of candidates, must be 1
-    assert len(candidates)<=1,"Error dwarf function number"
+    # assert len(candidates)<=1,"Error dwarf function number"
     return candidates[0]
 
 def intersect_varlist(finfo,ilist,dlist):

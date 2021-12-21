@@ -39,6 +39,7 @@ class ModuleInfo:
     func_num = 0
     inlined_num = 0
     declared_inline_num = 0
+    has_inlinee_num = 0
     dwarf_num_total = 0
     dwarf_none_num_total = 0
     dwarf_reg_num_total = 0
@@ -47,7 +48,7 @@ class ModuleInfo:
     dwarf_unknown_num_total = 0
     func_info_list = []
 
-    def add_func_info(self,func_name,inlined,declared_inline,
+    def add_func_info(self,func_name,inlined,declared_inline,has_inlinee,
                     dwarf_num,dwarf_none_num,
                     dwarf_reg_num,
                     dwarf_stack_num,
@@ -62,6 +63,8 @@ class ModuleInfo:
             self.inlined_num+=1
         if declared_inline:
             self.declared_inline_num+=1
+        if has_inlinee:
+            self.has_inlinee_num+=1
 
         self.dwarf_num_total+=dwarf_num
         self.dwarf_none_num_total+=dwarf_none_num
@@ -90,6 +93,7 @@ class ModuleInfo:
                 "func_num":self.func_num,
                 "inlined_num":self.inlined_num,
                 "declared_inline_num":self.declared_inline_num,
+                "has_inlinee_num":self.has_inlinee_num,
                 "dwarf_num_total":self.dwarf_num_total,
                 "dwarf_none_num_total":self.dwarf_none_num_total,
                 "dwarf_reg_num_total":self.dwarf_reg_num_total,
@@ -104,6 +108,7 @@ class FunctionInfo:
     func_name = None
     inlined = False
     declared_inline = False
+    has_inlinee = False
 
     dwarf_num = 0
     dwarf_none_num = 0
@@ -114,17 +119,12 @@ class FunctionInfo:
     var_list = []
     inlined_subroutines = []   
 
-    # class inlinee:
-    #     name = None
-    #     start_addr = None
-    #     end_addr = None
-        
-
 
     def __init__(self):
         self.func_name = None
         self.inlined = False
         self.declared_inline = False
+        self.has_inlinee = False
 
         self.dwarf_num = 0
         self.dwarf_none_num = 0
@@ -143,7 +143,6 @@ class FunctionInfo:
     
     def set_declared_inline(self):
         self.declared_inline = True
-
 
     def __add_dwarf_reg_num(self):
         self.dwarf_reg_num+=1
@@ -180,6 +179,7 @@ class FunctionInfo:
         })
     
     def add_inlinee(self,name,ranges):
+        self.has_inlinee = True
         self.inlinee_list.append({
             "name":name,
             "ranges":ranges
@@ -191,6 +191,7 @@ class FunctionInfo:
             self.func_name,
             self.inlined,
             self.declared_inline,
+            self.has_inlinee,
             self.dwarf_num,
             self.dwarf_none_num,
             self.dwarf_reg_num,
@@ -451,7 +452,6 @@ class DwarfParser:
         # parse nested inlined subroutine
         if die.tag == "DW_TAG_inlined_subroutine":
             self.__parse_inlinee(die)
-
             pass
 
         for child in die.iter_children():
@@ -484,9 +484,3 @@ if __name__ == '__main__':
             module_info = process_file(filename)
             # print(module_info)
             json.dump(module_info,f)
-        
-
-
-
-
-
