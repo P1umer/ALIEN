@@ -13,7 +13,7 @@ from elftools.dwarf.descriptions import (
 from elftools.dwarf.locationlists import (
     LocationEntry, LocationExpr, LocationParser)
 import json,re
-
+from collections import namedtuple
 
 class cached_property(object):
     """
@@ -53,6 +53,7 @@ class ModuleInfo:
                     dwarf_stack_num,
                     dwarf_poly_num,
                     dwarf_unknown_num,
+                    inlinee_list,
                     var_list):
         
         self.func_num+=1
@@ -79,6 +80,7 @@ class ModuleInfo:
             "dwarf_stack_num":dwarf_stack_num,
             "dwarf_poly_num":dwarf_poly_num,
             "dwarf_unknown_num":dwarf_unknown_num,
+            "inlinee_list":inlinee_list,
             "var_list":var_list
         })
 
@@ -110,6 +112,14 @@ class FunctionInfo:
     dwarf_poly_num = 0
     dwarf_unknown_num = 0
     var_list = []
+    inlined_subroutines = []   
+
+    # class inlinee:
+    #     name = None
+    #     start_addr = None
+    #     end_addr = None
+        
+
 
     def __init__(self):
         self.func_name = None
@@ -123,6 +133,7 @@ class FunctionInfo:
         self.dwarf_poly_num = 0
         self.dwarf_unknown_num =0
         self.var_list = []
+        self.inlinee_list = []
 
     def set_func_name(self,name):
         self.func_name = name
@@ -168,6 +179,13 @@ class FunctionInfo:
             "type":ltype
         })
     
+    def add_inlinee(self,name,ranges):
+        self.inlinee_list.append({
+            "name":name,
+            "ranges":ranges
+        })
+
+    
     def serialize(self,minfo):
         return minfo.add_func_info(
             self.func_name,
@@ -179,6 +197,7 @@ class FunctionInfo:
             self.dwarf_stack_num,
             self.dwarf_poly_num,
             self.dwarf_unknown_num,
+            self.inlinee_list,
             self.var_list
         )
     
@@ -188,6 +207,7 @@ class DwarfParser:
     function_info = None # tmp info
     elffile = None
     dwarfinfo = None
+    locs = None
     location_lists = None
     loc_parser = None
     cu = None
@@ -205,6 +225,8 @@ class DwarfParser:
             # get_dwarf_info returns a DWARFInfo context object, which is the
             # starting point for all DWARF-based processing in pyelftools.
             self.dwarfinfo = self.elffile.get_dwarf_info()
+
+            self.locs = self.dwarfinfo.range_lists()
 
             # The location lists are extracted by DWARFInfo from the .debug_loc
             # section, and returned here as a LocationLists object.
@@ -277,6 +299,24 @@ class DwarfParser:
         else:
             self.function_info.add_var_info(name,loc['loc_desc'],loc['loc_type'])
         return 
+    
+    def __parse_inlinee(self,die):
+        inlinefn = die.get_DIE_from_attribute('DW_AT_abstract_origin')
+        name = inlinefn.attributes["DW_AT_name"].value.decode('ascii')
+        #print(('  '*depth) + name)
+
+        ranges = []
+        if 'DW_AT_ranges' in die.attributes:
+            rs = self.locs.get_range_list_at_offset(die.attributes['DW_AT_ranges'].value)
+            for re in rs:
+                lowpc = re.begin_offset
+                highpc = re.end_offset
+                ranges.append((hex(lowpc), hex(highpc)))
+        elif 'DW_AT_high_pc' in die.attributes:
+            lowpc = die.attributes['DW_AT_low_pc'].value
+            highpc = die.attributes['DW_AT_high_pc'].value + lowpc
+            ranges.append((hex(lowpc), hex(highpc)))
+        self.function_info.add_inlinee(name, ranges)
 
     def __location(self,die):
         assert (die.tag=='DW_TAG_variable'), "not variable"
@@ -407,6 +447,13 @@ class DwarfParser:
             self.__parse_variable(die)
             return
             # print(die.attributes['DW_AT_location'].form,die.attributes['DW_AT_name'].value)
+        
+        # parse nested inlined subroutine
+        if die.tag == "DW_TAG_inlined_subroutine":
+            self.__parse_inlinee(die)
+
+            pass
+
         for child in die.iter_children():
             self.parse_die_node(child)
 
